@@ -10,6 +10,7 @@ import Combine
 
 import UIKit
 
+@MainActor
 public final class Glide {
     
     public static var instance: Glide!
@@ -134,13 +135,11 @@ public final class Glide {
         
         logger.info("Opening URL: \(urlString)")
         
-        DispatchQueue.main.async {
-            UIApplication.shared.open(url, options: [:]) { success in
-                if success {
-                    logger.info("Successfully opened URL")
-                } else {
-                    logger.error("Failed to open URL")
-                }
+        UIApplication.shared.open(url, options: [:]) { success in
+            if success {
+                logger.info("Successfully opened URL")
+            } else {
+                logger.error("Failed to open URL")
             }
         }
     }
