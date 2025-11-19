@@ -15,7 +15,7 @@ class ProcessFlow {
         self.apiRequestProvider = apiRequestProvider
     }
     
-    func execute(url: String, sessionKey: String) -> AnyPublisher<ProcessResponse, GlideSDKError> {
+    func execute(url: String, sessionKey: String, phoneNumber: String) -> AnyPublisher<ProcessResponse, GlideSDKError> {
         guard let requestUrl = URL(string: url) else {
             logger.error("Invalid process URL: \(url)")
             return Fail(error: GlideSDKError.unknown(NSError(domain: "Invalid URL", code: -1)))
@@ -25,10 +25,14 @@ class ProcessFlow {
         let processRequest = ProcessRequest(
             session: ProcessRequest.Session(
                 session_key: sessionKey,
-                protocol_type: "link"
+                protocol_type: "link",
+                metadata: ProcessRequest.Metadata(
+                    use_case: "VerifyPhoneNumber"
+                )
             ),
             credential: sessionKey,
-            use_case: "VerifyPhoneNumber"
+            use_case: "VerifyPhoneNumber",
+            phone_number: phoneNumber
         )
         
         guard let requestBody = try? JSONEncoder().encode(processRequest) else {

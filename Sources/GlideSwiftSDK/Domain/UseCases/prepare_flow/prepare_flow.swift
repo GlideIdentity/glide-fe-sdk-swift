@@ -17,7 +17,7 @@ class PrepareFlow {
         self.userAgentProvider = userAgentProvider
     }
     
-    func execute(url: String) -> AnyPublisher<PrepareResponse, GlideSDKError> {
+    func execute(url: String, phoneNumber: String) -> AnyPublisher<PrepareResponse, GlideSDKError> {
         guard let requestUrl = URL(string: url) else {
             logger.error("Invalid prepare URL: \(url)")
             return Fail(error: GlideSDKError.unknown(NSError(domain: "Invalid URL", code: -1)))
@@ -26,7 +26,7 @@ class PrepareFlow {
         
         let prepareRequest = PrepareRequest(
             use_case: "VerifyPhoneNumber",
-            phone_number: "+14152654845",
+            phone_number: phoneNumber,
             nonce: "PYVzSoVZZb_1LeEW9gFYYChjgNPqNXQr9elBJlu56Cs",
             id: "ios-1763548919441-aw4y2m485",
             consent_data: PrepareRequest.ConsentData(
