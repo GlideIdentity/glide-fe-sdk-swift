@@ -20,7 +20,7 @@ The [Swift Package Manager](https://swift.org/package-manager/) is a tool for ma
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ClearBlockchain/GlideSwiftSDK.git")
+    .package(url: "https://github.com/GlideIdentity/glide-fe-sdk-swift.git")
 ]
 ```
 
