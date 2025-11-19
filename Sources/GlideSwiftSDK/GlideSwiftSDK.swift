@@ -8,6 +8,8 @@
 import Foundation
 import Combine
 
+import UIKit
+
 public final class Glide {
     
     public static var instance: Glide!
@@ -30,7 +32,7 @@ public final class Glide {
         self.repository = repository
     }
     
-    public func start(completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
+    public func start(phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
         guard validateSDKState(completion: completion) else { return }
         
         guard let config = sdkConfig else {
@@ -40,7 +42,7 @@ public final class Glide {
         
         logger.info("Starting Glide SDK prepare flow")
         
-        executeFlowChain(config: config)
+        executeFlowChain(config: config, phoneNumber: phoneNumber)
             .sink(
                 receiveCompletion: { [weak self] result in self?.handleCompletion(result: result, completion: completion) },
                 receiveValue: { [weak self] result in self?.handleSuccess(result: result, completion: completion) }
@@ -58,9 +60,12 @@ public final class Glide {
         return true
     }
     
-    private func executeFlowChain(config: GlideConfiguration) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
-        return repository.executePrepare(url: config.prepareUrl)
+    private func executeFlowChain(config: GlideConfiguration, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
+        return repository.executePrepare(url: config.prepareUrl, phoneNumber: phoneNumber)
             .subscribe(on: DispatchQueue.global(qos: .userInitiated))
+            .handleEvents(receiveOutput: { [weak self] prepareResponse in
+                self?.openURL(urlString: prepareResponse.data.url)
+            })
             .flatMap { [weak self] prepareResponse -> AnyPublisher<(PrepareResponse, InvokeResponse), GlideSDKError> in
                 guard let self = self else {
                     return self?.failWithDeallocatedError() ?? Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1))).eraseToAnyPublisher()
@@ -71,7 +76,7 @@ public final class Glide {
                 guard let self = self else {
                     return Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1))).eraseToAnyPublisher()
                 }
-                return self.executeProcessFlow(prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.proccessUrl)
+                return self.executeProcessFlow(prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.proccessUrl, phoneNumber: phoneNumber)
             }
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
@@ -86,11 +91,11 @@ public final class Glide {
             .eraseToAnyPublisher()
     }
     
-    private func executeProcessFlow(prepareResponse: PrepareResponse, invokeResponse: InvokeResponse, url: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
+    private func executeProcessFlow(prepareResponse: PrepareResponse, invokeResponse: InvokeResponse, url: String, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
         logger.info("Invoke flow succeeded with status: \(invokeResponse.status)")
         logger.info("Starting process flow with session key: \(invokeResponse.session_key)")
         
-        return repository.executeProcess(url: url, sessionKey: invokeResponse.session_key)
+        return repository.executeProcess(url: url, sessionKey: invokeResponse.session_key, phoneNumber: phoneNumber)
             .map { (prepareResponse, $0) }
             .eraseToAnyPublisher()
     }
@@ -119,6 +124,25 @@ public final class Glide {
     private func failWithDeallocatedError<T>() -> AnyPublisher<T, GlideSDKError> {
         return Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1)))
             .eraseToAnyPublisher()
+    }
+    
+    private func openURL(urlString: String) {
+        guard let url = URL(string: urlString) else {
+            logger.error("Invalid URL: \(urlString)")
+            return
+        }
+        
+        logger.info("Opening URL: \(urlString)")
+        
+        DispatchQueue.main.async {
+            UIApplication.shared.open(url, options: [:]) { success in
+                if success {
+                    logger.info("Successfully opened URL")
+                } else {
+                    logger.error("Failed to open URL")
+                }
+            }
+        }
     }
     
 }
