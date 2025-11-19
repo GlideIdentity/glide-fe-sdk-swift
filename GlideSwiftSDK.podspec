@@ -16,8 +16,6 @@ Pod::Spec.new do |s|
 
   s.source_files = 'Sources/**/*.{swift}'
 
-  s.dependency 'JWTDecode', '3.1.0'
-
   s.requires_arc = true
 
 end

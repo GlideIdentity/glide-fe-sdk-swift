@@ -11,14 +11,10 @@ let package = Package(
             name: "GlideSwiftSDK",
             targets: ["GlideSwiftSDK"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/auth0/JWTDecode.swift", from: "3.1.0"),
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "GlideSwiftSDK",
-            dependencies: [
-                .product(name: "JWTDecode", package: "JWTDecode.swift")
-            ]),
+            dependencies: []),
     ]
 )
