@@ -17,10 +17,10 @@ class PrepareFlow {
         self.userAgentProvider = userAgentProvider
     }
     
-    func execute(url: String) -> AnyPublisher<PrepareResponse, SDKError> {
+    func execute(url: String) -> AnyPublisher<PrepareResponse, GlideSDKError> {
         guard let requestUrl = URL(string: url) else {
             logger.error("Invalid prepare URL: \(url)")
-            return Fail(error: SDKError.unknown(NSError(domain: "Invalid URL", code: -1)))
+            return Fail(error: GlideSDKError.unknown(NSError(domain: "Invalid URL", code: -1)))
                 .eraseToAnyPublisher()
         }
         
@@ -42,7 +42,7 @@ class PrepareFlow {
         
         guard let requestBody = try? JSONEncoder().encode(prepareRequest) else {
             logger.error("Failed to encode prepare request")
-            return Fail(error: SDKError.unknown(NSError(domain: "Encoding error", code: -1)))
+            return Fail(error: GlideSDKError.unknown(NSError(domain: "Encoding error", code: -1)))
                 .eraseToAnyPublisher()
         }
         

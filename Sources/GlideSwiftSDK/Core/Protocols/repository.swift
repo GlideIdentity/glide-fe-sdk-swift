@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 protocol Repository {
-    func executePrepare(url: String) -> AnyPublisher<PrepareResponse, SDKError>
-    func executeInvoke(url: String) -> AnyPublisher<InvokeResponse, SDKError>
+    func executePrepare(url: String) -> AnyPublisher<PrepareResponse, GlideSDKError>
+    func executeInvoke(url: String) -> AnyPublisher<InvokeResponse, GlideSDKError>
 }
 

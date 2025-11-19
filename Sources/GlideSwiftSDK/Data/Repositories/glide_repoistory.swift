@@ -18,11 +18,11 @@ class GlideRepository : Repository {
         self.invokeFlow = invokeFlow
     }
     
-    func executePrepare(url: String) -> AnyPublisher<PrepareResponse, SDKError> {
+    func executePrepare(url: String) -> AnyPublisher<PrepareResponse, GlideSDKError> {
         return prepareFlow.execute(url: url)
     }
     
-    func executeInvoke(url: String) -> AnyPublisher<InvokeResponse, SDKError> {
+    func executeInvoke(url: String) -> AnyPublisher<InvokeResponse, GlideSDKError> {
         return invokeFlow.execute(url: url)
     }
 }

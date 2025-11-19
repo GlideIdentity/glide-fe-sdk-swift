@@ -22,21 +22,23 @@ public final class Glide {
         let prepareFlow = PrepareFlow(apiRequestProvider: apiRequestProvider, userAgentProvider: userAgentProvider)
         let invokeFlow = InvokeFlow(apiRequestProvider: apiRequestProvider)
         Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow))
-        Glide.instance.sdkConfig = GlideConfiguration(prepareUrl: prepareUrl, proccessUel: proccessUrl)
+        Glide.instance.sdkConfig = GlideConfiguration(prepareUrl: prepareUrl, proccessUrl: proccessUrl)
     }
     
     init(repository : Repository) {
         self.repository = repository
     }
     
-    public func start(completion: @escaping ((code: String, state: String)) -> Void) {
+    public func start(completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
         guard Glide.instance != nil else {
             logger.error("Glide SDK has not been initialized. Please call Glide.configure(prepareUrl:proccessUrl:) before using the SDK.")
+            completion(.failure(.sdkNotInitialized))
             return
         }
         
         guard let config = sdkConfig else {
             logger.error("Glide SDK configuration is missing. Please call Glide.configure(prepareUrl:proccessUrl:) before using the SDK.")
+            completion(.failure(.configurationMissing))
             return
         }
         
@@ -44,9 +46,9 @@ public final class Glide {
         
         repository.executePrepare(url: config.prepareUrl)
             .subscribe(on: DispatchQueue.global(qos: .userInitiated))
-            .flatMap { [weak self] prepareResponse -> AnyPublisher<(PrepareResponse, InvokeResponse), SDKError> in
+            .flatMap { [weak self] prepareResponse -> AnyPublisher<(PrepareResponse, InvokeResponse), GlideSDKError> in
                 guard let self = self else {
-                    return Fail(error: SDKError.unknown(NSError(domain: "Self deallocated", code: -1)))
+                    return Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1)))
                         .eraseToAnyPublisher()
                 }
                 
@@ -62,12 +64,13 @@ public final class Glide {
                 switch result {
                 case .failure(let error):
                     logger.error("Flow failed: \(error.localizedDescription)")
+                    completion(.failure(error))
                 case .finished:
                     logger.info("All flows completed successfully")
                 }
             }, receiveValue: { prepareResponse, invokeResponse in
                 logger.info("Invoke flow succeeded with status: \(invokeResponse.status)")
-                completion((code: prepareResponse.session.session_key, state: prepareResponse.session.nonce))
+                completion(.success((code: prepareResponse.session.session_key, state: prepareResponse.session.nonce)))
             })
             .store(in: &cancellables)
     }
