@@ -7,7 +7,7 @@ class AppLogger {
         case error = "❌ ERROR"
         case info = "ℹ️ INFO"
         case verbose = "🔍 VERBOSE"
-        case debug = "🐛 DEBUG"
+        case debug = "🐛 DEBUG" 
     }
 
     func log(message: String, level: LogLevel = .info, file: String = #file, function: String = #function, line: Int = #line) {
