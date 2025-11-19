@@ -11,5 +11,6 @@ import Combine
 protocol Repository {
     func executePrepare(url: String) -> AnyPublisher<PrepareResponse, GlideSDKError>
     func executeInvoke(url: String) -> AnyPublisher<InvokeResponse, GlideSDKError>
+    func executeProcess(url: String, sessionKey: String) -> AnyPublisher<ProcessResponse, GlideSDKError>
 }
 
