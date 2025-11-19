@@ -1,4 +1,9 @@
-
+//
+//  errors.swift
+//  GlideSwiftSDK
+//
+//  Created by amir avisar on 19/11/2025.
+//
 
 enum SDKError: Error {
     case statusCode(Int, String)
