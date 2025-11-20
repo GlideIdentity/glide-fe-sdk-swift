@@ -12,24 +12,24 @@ import UIKit
 
 public final class Glide {
     
-    public static var instance: Glide!
+    nonisolated(unsafe) public private(set) static var instance: Glide!
     
     private let repository : Repository
-    private var sdkConfig: GlideConfiguration!
+    private let sdkConfig: GlideConfiguration!
     private var cancellables = Set<AnyCancellable>()
     
-    public static func configure(prepareUrl: String, proccessUrl: String) {
+    public static func configure(prepareUrl: String, processUrl: String) {
         let apiRequestProvider = DefaultApiRequestProvider()
         let userAgentProvider = DefaultUserAgentProvider()
         let prepareFlow = PrepareFlow(apiRequestProvider: apiRequestProvider, userAgentProvider: userAgentProvider)
         let invokeFlow = InvokeFlow(apiRequestProvider: apiRequestProvider)
         let processFlow = ProcessFlow(apiRequestProvider: apiRequestProvider)
-        Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow, processFlow: processFlow))
-        Glide.instance.sdkConfig = GlideConfiguration(prepareUrl: prepareUrl, proccessUrl: proccessUrl)
+        Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow, processFlow: processFlow), sdkConfig: GlideConfiguration(prepareUrl: prepareUrl, processUrl: processUrl))
     }
     
-    init(repository : Repository) {
+    private init(repository : Repository, sdkConfig: GlideConfiguration) {
         self.repository = repository
+        self.sdkConfig = sdkConfig
     }
     
     public func start(phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
@@ -51,7 +51,6 @@ public final class Glide {
     }
     
     // MARK: - Private Methods
-    
     private func validateSDKState(completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) -> Bool {
         guard Glide.instance != nil else {
             handleError(error: .sdkNotInitialized, completion: completion)
@@ -76,7 +75,7 @@ public final class Glide {
                 guard let self = self else {
                     return Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1))).eraseToAnyPublisher()
                 }
-                return self.executeProcessFlow(prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.proccessUrl, phoneNumber: phoneNumber)
+                return self.executeProcessFlow(prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.processUrl, phoneNumber: phoneNumber)
             }
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()

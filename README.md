@@ -32,15 +32,72 @@ Firstly, import `GlideSwiftSDK`.
 import GlideSwiftSDK
 ```
 
-Second, configure the SDK, recommended in `didFinishLaunchingWithOptions` in `AppDelegare.swift`.
+Second, configure the SDK with your prepare and process URLs. This is recommended in `application(_:didFinishLaunchingWithOptions:)` in `AppDelegate.swift` or in your app's initialization code.
 
 ```swift
-Glide.configure(clientId: <CLIENT_ID>)
+Glide.configure(prepareUrl: "https://your-api.com/prepare", processUrl: "https://your-api.com/process")
 ```
 
-Third, authenticate wherever you need.
+Third, start the authentication flow by providing a phone number.
 
 ```swift
-Glide.instance.startVerification (state: <STATE>, phoneNumber: <PHONE_NUMBER>) { code, state in
+Glide.instance.start(phoneNumber: "+14152654845") { result in
+    switch result {
+    case .success(let data):
+        print("Success! Code: \(data.code), State: \(data.state)")
+    case .failure(let error):
+        print("Error: \(error.localizedDescription)")
+    }
 }
 ```
+
+### Example with SwiftUI
+
+```swift
+import SwiftUI
+import GlideSwiftSDK
+
+struct ContentView: View {
+    @State private var phoneNumber = ""
+    @State private var resultMessage = ""
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            TextField("Phone Number (e.g., +14152654845)", text: $phoneNumber)
+                .textFieldStyle(.roundedBorder)
+                .keyboardType(.phonePad)
+            
+            Button("Start Verification") {
+                startGlideSDK()
+            }
+            .disabled(phoneNumber.isEmpty)
+            
+            if !resultMessage.isEmpty {
+                Text(resultMessage)
+            }
+        }
+        .padding()
+    }
+    
+    private func startGlideSDK() {
+        Glide.instance.start(phoneNumber: phoneNumber) { result in
+            switch result {
+            case .success(let data):
+                resultMessage = "Success! Code: \(data.code)"
+            case .failure(let error):
+                resultMessage = "Error: \(error.localizedDescription)"
+            }
+        }
+    }
+}
+```
+
+### Configuration
+
+The SDK needs to be configured with two URLs:
+- **prepareUrl**: The endpoint for initiating the verification flow
+- **processUrl**: The endpoint for processing the verification
+
+### Phone Number Format
+
+Phone numbers should be provided in E.164 format (e.g., `+14152654845`).
