@@ -35,7 +35,7 @@ import GlideSwiftSDK
 Second, configure the SDK with your prepare and process URLs. This is recommended in `application(_:didFinishLaunchingWithOptions:)` in `AppDelegate.swift` or in your app's initialization code.
 
 ```swift
-Glide.configure(prepareUrl: "https://your-api.com/prepare", proccessUrl: "https://your-api.com/process")
+Glide.configure(prepareUrl: "https://your-api.com/prepare", processUrl: "https://your-api.com/process")
 ```
 
 Third, start the authentication flow by providing a phone number. Since the SDK uses `@MainActor`, make sure to call it from the main thread or in an async context.

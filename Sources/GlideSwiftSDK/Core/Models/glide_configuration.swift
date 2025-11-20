@@ -7,5 +7,5 @@
 
 struct GlideConfiguration {
     let prepareUrl: String
-    let proccessUrl: String
+    let processUrl: String
 }

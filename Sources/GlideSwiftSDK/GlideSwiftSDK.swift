@@ -16,15 +16,15 @@ public final class Glide {
     
     private let repository : Repository
     private let sdkConfig: GlideConfiguration!
-    private var currentCancellable: AnyCancellable?
+    private var cancellables = Set<AnyCancellable>()
     
-    public static func configure(prepareUrl: String, proccessUrl: String) {
+    public static func configure(prepareUrl: String, processUrl: String) {
         let apiRequestProvider = DefaultApiRequestProvider()
         let userAgentProvider = DefaultUserAgentProvider()
         let prepareFlow = PrepareFlow(apiRequestProvider: apiRequestProvider, userAgentProvider: userAgentProvider)
         let invokeFlow = InvokeFlow(apiRequestProvider: apiRequestProvider)
         let processFlow = ProcessFlow(apiRequestProvider: apiRequestProvider)
-        Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow, processFlow: processFlow), sdkConfig: GlideConfiguration(prepareUrl: prepareUrl, proccessUrl: proccessUrl))
+        Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow, processFlow: processFlow), sdkConfig: GlideConfiguration(prepareUrl: prepareUrl, processUrl: processUrl))
     }
     
     private init(repository : Repository, sdkConfig: GlideConfiguration) {
@@ -42,11 +42,12 @@ public final class Glide {
         
         logger.info("Starting Glide SDK prepare flow")
         
-        currentCancellable = executeFlowChain(config: config, phoneNumber: phoneNumber)
+        executeFlowChain(config: config, phoneNumber: phoneNumber)
             .sink(
                 receiveCompletion: { [weak self] result in self?.handleCompletion(result: result, completion: completion) },
                 receiveValue: { [weak self] result in self?.handleSuccess(result: result, completion: completion) }
             )
+            .store(in: &cancellables)
     }
     
     // MARK: - Private Methods
@@ -74,7 +75,7 @@ public final class Glide {
                 guard let self = self else {
                     return Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1))).eraseToAnyPublisher()
                 }
-                return self.executeProcessFlow(prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.proccessUrl, phoneNumber: phoneNumber)
+                return self.executeProcessFlow(prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.processUrl, phoneNumber: phoneNumber)
             }
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
