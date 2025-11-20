@@ -96,7 +96,7 @@ struct ContentView: View {
 
 The SDK needs to be configured with two URLs:
 - **prepareUrl**: The endpoint for initiating the verification flow
-- **proccessUrl**: The endpoint for processing the verification
+- **processUrl**: The endpoint for processing the verification
 
 ### Phone Number Format
 
