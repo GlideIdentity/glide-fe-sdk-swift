@@ -10,14 +10,13 @@ import Combine
 
 import UIKit
 
-@MainActor
 public final class Glide {
     
-    public static var instance: Glide!
+    nonisolated(unsafe) public private(set) static var instance: Glide!
     
     private let repository : Repository
-    private var sdkConfig: GlideConfiguration!
-    private var cancellables = Set<AnyCancellable>()
+    private let sdkConfig: GlideConfiguration!
+    private var currentCancellable: AnyCancellable?
     
     public static func configure(prepareUrl: String, proccessUrl: String) {
         let apiRequestProvider = DefaultApiRequestProvider()
@@ -25,12 +24,12 @@ public final class Glide {
         let prepareFlow = PrepareFlow(apiRequestProvider: apiRequestProvider, userAgentProvider: userAgentProvider)
         let invokeFlow = InvokeFlow(apiRequestProvider: apiRequestProvider)
         let processFlow = ProcessFlow(apiRequestProvider: apiRequestProvider)
-        Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow, processFlow: processFlow))
-        Glide.instance.sdkConfig = GlideConfiguration(prepareUrl: prepareUrl, proccessUrl: proccessUrl)
+        Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow, processFlow: processFlow), sdkConfig: GlideConfiguration(prepareUrl: prepareUrl, proccessUrl: proccessUrl))
     }
     
-    init(repository : Repository) {
+    private init(repository : Repository, sdkConfig: GlideConfiguration) {
         self.repository = repository
+        self.sdkConfig = sdkConfig
     }
     
     public func start(phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
@@ -43,16 +42,14 @@ public final class Glide {
         
         logger.info("Starting Glide SDK prepare flow")
         
-        executeFlowChain(config: config, phoneNumber: phoneNumber)
+        currentCancellable = executeFlowChain(config: config, phoneNumber: phoneNumber)
             .sink(
                 receiveCompletion: { [weak self] result in self?.handleCompletion(result: result, completion: completion) },
                 receiveValue: { [weak self] result in self?.handleSuccess(result: result, completion: completion) }
             )
-            .store(in: &cancellables)
     }
     
     // MARK: - Private Methods
-    
     private func validateSDKState(completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) -> Bool {
         guard Glide.instance != nil else {
             handleError(error: .sdkNotInitialized, completion: completion)
@@ -135,11 +132,13 @@ public final class Glide {
         
         logger.info("Opening URL: \(urlString)")
         
-        UIApplication.shared.open(url, options: [:]) { success in
-            if success {
-                logger.info("Successfully opened URL")
-            } else {
-                logger.error("Failed to open URL")
+        DispatchQueue.main.async {
+            UIApplication.shared.open(url, options: [:]) { success in
+                if success {
+                    logger.info("Successfully opened URL")
+                } else {
+                    logger.error("Failed to open URL")
+                }
             }
         }
     }
