@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name              = 'GlideSwiftSDK'
-  s.version           = '1.0.7'
+  s.version           = '1.0.8'
   s.summary           = 'A Glide Swift SDK'
   s.homepage          = 'https://github.com/ClearBlockchain/glide-swift-sdk'
   s.license           = { type: 'MIT' }
