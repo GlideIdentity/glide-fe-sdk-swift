@@ -17,8 +17,9 @@ public final class Glide {
     private let container: DIContainer
     private var cancellables = Set<AnyCancellable>()
     
-    public static func configure(prepareUrl: String, processUrl: String) {
-        let config = GlideConfiguration(prepareUrl: prepareUrl, processUrl: processUrl)
+    public static func configure(prepareUrl: String, processUrl: String, logLevel: LogLevel = .info) {
+        let config = GlideConfiguration(prepareUrl: prepareUrl, processUrl: processUrl, logLevel: logLevel)
+        logger.setLogLevel(logLevel)
         let container = DIContainer(sdkConfig: config)
         Glide.instance = Glide(container: container)
     }

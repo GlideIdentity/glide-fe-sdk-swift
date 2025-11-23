@@ -8,4 +8,5 @@
 struct GlideConfiguration {
     let prepareUrl: String
     let processUrl: String
+    let logLevel: LogLevel
 }

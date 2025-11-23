@@ -38,6 +38,16 @@ Second, configure the SDK with your prepare and process URLs. This is recommende
 Glide.configure(prepareUrl: "https://your-api.com/prepare", processUrl: "https://your-api.com/process")
 ```
 
+You can optionally specify a log level to control the verbosity of SDK logs:
+
+```swift
+Glide.configure(
+    prepareUrl: "https://your-api.com/prepare", 
+    processUrl: "https://your-api.com/process",
+    logLevel: .debug  // Options: .none, .error, .info, .verbose, .debug
+)
+```
+
 Third, start the authentication flow by providing a phone number.
 
 ```swift
@@ -97,6 +107,24 @@ struct ContentView: View {
 The SDK needs to be configured with two URLs:
 - **prepareUrl**: The endpoint for initiating the verification flow
 - **processUrl**: The endpoint for processing the verification
+
+#### Log Levels
+
+The SDK supports the following log levels (default is `.info`):
+- **`.none`**: No logging
+- **`.error`**: Only error messages
+- **`.info`**: Informational messages and errors (default)
+- **`.verbose`**: Detailed information including info and errors
+- **`.debug`**: All log messages including debug information (only in DEBUG builds)
+
+Example with custom log level:
+```swift
+Glide.configure(
+    prepareUrl: "https://your-api.com/prepare",
+    processUrl: "https://your-api.com/process",
+    logLevel: .error  // Only show errors
+)
+```
 
 ### Phone Number Format
 
