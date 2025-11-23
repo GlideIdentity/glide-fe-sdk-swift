@@ -7,51 +7,51 @@
 
 import Foundation
 
-final class DIContainer {
+internal final class DIContainer {
     
     // MARK: - Configuration
     private let sdkConfig: GlideConfiguration
-    
-    // MARK: - Providers
-    private lazy var apiRequestProvider: ApiRequestProvider = {
-        return DefaultApiRequestProvider()
-    }()
-    
-    private lazy var userAgentProvider: UserAgentProvider = {
-        return DefaultUserAgentProvider()
-    }()
-    
-    // MARK: - Use Cases
-    private lazy var prepareFlow: PrepareFlow = {
-        return PrepareFlow(
-            apiRequestProvider: apiRequestProvider,
-            userAgentProvider: userAgentProvider
-        )
-    }()
-    
-    private lazy var invokeFlow: InvokeFlow = {
-        return InvokeFlow(apiRequestProvider: apiRequestProvider)
-    }()
-    
-    private lazy var processFlow: ProcessFlow = {
-        return ProcessFlow(apiRequestProvider: apiRequestProvider)
-    }()
-    
-    // MARK: - Repository
-    lazy var repository: Repository = {
-        return GlideRepository(
-            prepareFlow: prepareFlow,
-            invokeFlow: invokeFlow,
-            processFlow: processFlow
-        )
-    }()
     
     // MARK: - Initialization
     init(sdkConfig: GlideConfiguration) {
         self.sdkConfig = sdkConfig
     }
     
-    func getConfig() -> GlideConfiguration {
+    internal func getConfig() -> GlideConfiguration {
         return sdkConfig
+    }
+    
+    // MARK: - Providers
+    internal func provideApiRequestProvider() -> ApiRequestProvider {
+        return DefaultApiRequestProvider()
+    }
+    
+    internal func provideUserAgentProvider() -> UserAgentProvider {
+        return DefaultUserAgentProvider()
+    }
+    
+    // MARK: - Use Cases
+    internal func providePrepareFlow() -> PrepareFlow {
+        return PrepareFlow(
+            apiRequestProvider: provideApiRequestProvider(),
+            userAgentProvider: provideUserAgentProvider()
+        )
+    }
+    
+    internal func provideInvokeFlow() -> InvokeFlow {
+        return InvokeFlow(apiRequestProvider: provideApiRequestProvider())
+    }
+    
+    internal func provideProcessFlow() -> ProcessFlow {
+        return ProcessFlow(apiRequestProvider: provideApiRequestProvider())
+    }
+    
+    // MARK: - Repository
+    internal func provideRepository() -> Repository {
+        return GlideRepository(
+            prepareFlow: providePrepareFlow(),
+            invokeFlow: provideInvokeFlow(),
+            processFlow: provideProcessFlow()
+        )
     }
 }

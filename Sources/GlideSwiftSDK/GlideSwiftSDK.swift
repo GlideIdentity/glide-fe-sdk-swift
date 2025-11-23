@@ -52,7 +52,9 @@ public final class Glide {
     }
     
     private func executeFlowChain(config: GlideConfiguration, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
-        return container.repository.executePrepare(url: config.prepareUrl, phoneNumber: phoneNumber)
+        let repository = container.provideRepository()
+        
+        return repository.executePrepare(url: config.prepareUrl, phoneNumber: phoneNumber)
             .subscribe(on: DispatchQueue.global(qos: .userInitiated))
             .handleEvents(receiveOutput: { [weak self] prepareResponse in
                 self?.openURL(urlString: prepareResponse.data.url)
@@ -61,32 +63,32 @@ public final class Glide {
                 guard let self = self else {
                     return self?.failWithDeallocatedError() ?? Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1))).eraseToAnyPublisher()
                 }
-                return self.executeInvokeFlow(prepareResponse: prepareResponse)
+                return self.executeInvokeFlow(repository: repository, prepareResponse: prepareResponse)
             }
             .flatMap { [weak self] prepareResponse, invokeResponse -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> in
                 guard let self = self else {
                     return Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1))).eraseToAnyPublisher()
                 }
-                return self.executeProcessFlow(prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.processUrl, phoneNumber: phoneNumber)
+                return self.executeProcessFlow(repository: repository, prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.processUrl, phoneNumber: phoneNumber)
             }
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
     
-    private func executeInvokeFlow(prepareResponse: PrepareResponse) -> AnyPublisher<(PrepareResponse, InvokeResponse), GlideSDKError> {
+    private func executeInvokeFlow(repository: Repository, prepareResponse: PrepareResponse) -> AnyPublisher<(PrepareResponse, InvokeResponse), GlideSDKError> {
         logger.info("Prepare flow succeeded with session key: \(prepareResponse.session.session_key)")
         logger.info("Starting invoke flow with status URL: \(prepareResponse.data.status_url)")
         
-        return container.repository.executeInvoke(url: prepareResponse.data.status_url)
+        return repository.executeInvoke(url: prepareResponse.data.status_url)
             .map { (prepareResponse, $0) }
             .eraseToAnyPublisher()
     }
     
-    private func executeProcessFlow(prepareResponse: PrepareResponse, invokeResponse: InvokeResponse, url: String, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
+    private func executeProcessFlow(repository: Repository, prepareResponse: PrepareResponse, invokeResponse: InvokeResponse, url: String, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
         logger.info("Invoke flow succeeded with status: \(invokeResponse.status)")
         logger.info("Starting process flow with session key: \(invokeResponse.session_key)")
         
-        return container.repository.executeProcess(url: url, sessionKey: invokeResponse.session_key, phoneNumber: phoneNumber)
+        return repository.executeProcess(url: url, sessionKey: invokeResponse.session_key, phoneNumber: phoneNumber)
             .map { (prepareResponse, $0) }
             .eraseToAnyPublisher()
     }
