@@ -14,31 +14,23 @@ public final class Glide {
     
     nonisolated(unsafe) public private(set) static var instance: Glide!
     
-    private let repository : Repository
-    private let sdkConfig: GlideConfiguration!
+    private let container: DIContainer
     private var cancellables = Set<AnyCancellable>()
     
     public static func configure(prepareUrl: String, processUrl: String) {
-        let apiRequestProvider = DefaultApiRequestProvider()
-        let userAgentProvider = DefaultUserAgentProvider()
-        let prepareFlow = PrepareFlow(apiRequestProvider: apiRequestProvider, userAgentProvider: userAgentProvider)
-        let invokeFlow = InvokeFlow(apiRequestProvider: apiRequestProvider)
-        let processFlow = ProcessFlow(apiRequestProvider: apiRequestProvider)
-        Glide.instance = Glide(repository: GlideRepository(prepareFlow: prepareFlow, invokeFlow: invokeFlow, processFlow: processFlow), sdkConfig: GlideConfiguration(prepareUrl: prepareUrl, processUrl: processUrl))
+        let config = GlideConfiguration(prepareUrl: prepareUrl, processUrl: processUrl)
+        let container = DIContainer(sdkConfig: config)
+        Glide.instance = Glide(container: container)
     }
     
-    private init(repository : Repository, sdkConfig: GlideConfiguration) {
-        self.repository = repository
-        self.sdkConfig = sdkConfig
+    private init(container: DIContainer) {
+        self.container = container
     }
     
     public func start(phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
         guard validateSDKState(completion: completion) else { return }
         
-        guard let config = sdkConfig else {
-            handleError(error: .configurationMissing, completion: completion)
-            return
-        }
+        let config = container.getConfig()
         
         logger.info("Starting Glide SDK prepare flow")
         
@@ -60,7 +52,7 @@ public final class Glide {
     }
     
     private func executeFlowChain(config: GlideConfiguration, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
-        return repository.executePrepare(url: config.prepareUrl, phoneNumber: phoneNumber)
+        return container.repository.executePrepare(url: config.prepareUrl, phoneNumber: phoneNumber)
             .subscribe(on: DispatchQueue.global(qos: .userInitiated))
             .handleEvents(receiveOutput: { [weak self] prepareResponse in
                 self?.openURL(urlString: prepareResponse.data.url)
@@ -85,7 +77,7 @@ public final class Glide {
         logger.info("Prepare flow succeeded with session key: \(prepareResponse.session.session_key)")
         logger.info("Starting invoke flow with status URL: \(prepareResponse.data.status_url)")
         
-        return repository.executeInvoke(url: prepareResponse.data.status_url)
+        return container.repository.executeInvoke(url: prepareResponse.data.status_url)
             .map { (prepareResponse, $0) }
             .eraseToAnyPublisher()
     }
@@ -94,7 +86,7 @@ public final class Glide {
         logger.info("Invoke flow succeeded with status: \(invokeResponse.status)")
         logger.info("Starting process flow with session key: \(invokeResponse.session_key)")
         
-        return repository.executeProcess(url: url, sessionKey: invokeResponse.session_key, phoneNumber: phoneNumber)
+        return container.repository.executeProcess(url: url, sessionKey: invokeResponse.session_key, phoneNumber: phoneNumber)
             .map { (prepareResponse, $0) }
             .eraseToAnyPublisher()
     }
