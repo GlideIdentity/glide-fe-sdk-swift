@@ -15,33 +15,57 @@ class ProcessFlow {
         self.apiRequestProvider = apiRequestProvider
     }
     
-    func execute(url: String, sessionKey: String, phoneNumber: String) -> AnyPublisher<ProcessResponse, GlideSDKError> {
+    // Execute with ProcessRequest (without phone number)
+    func execute(url: String, request: ProcessRequest) -> AnyPublisher<ProcessResponse, GlideSDKError> {
+        return executeRequest(url: url, request: request)
+    }
+    
+    // Execute with ProcessRequestWithPhone
+    func execute(url: String, request: ProcessRequestWithPhone) -> AnyPublisher<ProcessResponse, GlideSDKError> {
+        return executeRequest(url: url, request: request)
+    }
+    
+    // Private helper for ProcessRequest
+    private func executeRequest(url: String, request: ProcessRequest) -> AnyPublisher<ProcessResponse, GlideSDKError> {
         guard let requestUrl = URL(string: url) else {
             logger.error("Invalid process URL: \(url)")
             return Fail(error: GlideSDKError.unknown(NSError(domain: "Invalid URL", code: -1)))
                 .eraseToAnyPublisher()
         }
         
-        let processRequest = ProcessRequest(
-            session: ProcessRequest.Session(
-                session_key: sessionKey,
-                protocol_type: "link",
-                metadata: ProcessRequest.Metadata(
-                    use_case: "VerifyPhoneNumber"
-                )
-            ),
-            credential: sessionKey,
-            use_case: "VerifyPhoneNumber",
-            phone_number: phoneNumber
-        )
-        
-        guard let requestBody = try? JSONEncoder().encode(processRequest) else {
+        guard let requestBody = try? JSONEncoder().encode(request) else {
             logger.error("Failed to encode process request")
             return Fail(error: GlideSDKError.unknown(NSError(domain: "Encoding error", code: -1)))
                 .eraseToAnyPublisher()
         }
         
-        logger.info("Executing process flow with URL: \(url)")
+        logger.info("Executing process flow without phone number")
+        
+        return apiRequestProvider.request(
+            url: requestUrl,
+            method: .POST,
+            headers: nil,
+            body: requestBody
+        )
+        .subscribe(on: DispatchQueue.global(qos: .background))
+        .eraseToAnyPublisher()
+    }
+    
+    // Private helper for ProcessRequestWithPhone
+    private func executeRequest(url: String, request: ProcessRequestWithPhone) -> AnyPublisher<ProcessResponse, GlideSDKError> {
+        guard let requestUrl = URL(string: url) else {
+            logger.error("Invalid process URL: \(url)")
+            return Fail(error: GlideSDKError.unknown(NSError(domain: "Invalid URL", code: -1)))
+                .eraseToAnyPublisher()
+        }
+        
+        guard let requestBody = try? JSONEncoder().encode(request) else {
+            logger.error("Failed to encode process request")
+            return Fail(error: GlideSDKError.unknown(NSError(domain: "Encoding error", code: -1)))
+                .eraseToAnyPublisher()
+        }
+        
+        logger.info("Executing process flow with phone number")
         
         return apiRequestProvider.request(
             url: requestUrl,

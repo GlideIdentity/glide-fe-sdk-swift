@@ -28,22 +28,36 @@ public final class Glide {
         self.container = container
     }
     
-    public func start(phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
+    /// Verify with a provided phone number
+    /// - Parameters:
+    ///   - phoneNumber: The phone number to verify in E.164 format (e.g., "+14152654845")
+    ///   - completion: A closure called with the result of the verification flow
+    public func verify(_ phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
+        executeVerification(phoneNumber: phoneNumber, useCase: .verifyPhoneNumber, completion: completion)
+    }
+    
+    /// Verify without providing a phone number (will get phone number from device)
+    /// - Parameter completion: A closure called with the result of the verification flow
+    public func verify(completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
+        executeVerification(phoneNumber: nil, useCase: .getPhoneNumber, completion: completion)
+    }
+    
+    // MARK: - Private Methods
+    
+    private func executeVerification(phoneNumber: String?, useCase: VerificationUseCase, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
         guard validateSDKState(completion: completion) else { return }
         
         let config = container.getConfig()
         
-        logger.info("Starting Glide SDK prepare flow")
+        logger.info("Starting Glide SDK \(useCase.rawValue) flow")
         
-        executeFlowChain(config: config, phoneNumber: phoneNumber)
+        executeFlowChain(config: config, phoneNumber: phoneNumber, useCase: useCase)
             .sink(
                 receiveCompletion: { [weak self] result in self?.handleCompletion(result: result, completion: completion) },
                 receiveValue: { [weak self] result in self?.handleSuccess(result: result, completion: completion) }
             )
             .store(in: &cancellables)
     }
-    
-    // MARK: - Private Methods
     private func validateSDKState(completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) -> Bool {
         guard Glide.instance != nil else {
             handleError(error: .sdkNotInitialized, completion: completion)
@@ -52,10 +66,10 @@ public final class Glide {
         return true
     }
     
-    private func executeFlowChain(config: GlideConfiguration, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
+    private func executeFlowChain(config: GlideConfiguration, phoneNumber: String?, useCase: VerificationUseCase) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
         let repository = container.provideRepository()
         
-        return repository.executePrepare(url: config.prepareUrl, phoneNumber: phoneNumber)
+        return repository.executePrepare(url: config.prepareUrl, phoneNumber: phoneNumber, useCase: useCase)
             .subscribe(on: DispatchQueue.global(qos: .userInitiated))
             .handleEvents(receiveOutput: { [weak self] prepareResponse in
                 self?.openURL(urlString: prepareResponse.data.url)
@@ -70,7 +84,7 @@ public final class Glide {
                 guard let self = self else {
                     return Fail(error: GlideSDKError.unknown(NSError(domain: "Self deallocated", code: -1))).eraseToAnyPublisher()
                 }
-                return self.executeProcessFlow(repository: repository, prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.processUrl, phoneNumber: phoneNumber)
+                return self.executeProcessFlow(repository: repository, prepareResponse: prepareResponse, invokeResponse: invokeResponse, url: config.processUrl, phoneNumber: phoneNumber, useCase: useCase)
             }
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
@@ -85,11 +99,11 @@ public final class Glide {
             .eraseToAnyPublisher()
     }
     
-    private func executeProcessFlow(repository: Repository, prepareResponse: PrepareResponse, invokeResponse: InvokeResponse, url: String, phoneNumber: String) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
+    private func executeProcessFlow(repository: Repository, prepareResponse: PrepareResponse, invokeResponse: InvokeResponse, url: String, phoneNumber: String?, useCase: VerificationUseCase) -> AnyPublisher<(PrepareResponse, ProcessResponse), GlideSDKError> {
         logger.info("Invoke flow succeeded with status: \(invokeResponse.status)")
         logger.info("Starting process flow with session key: \(invokeResponse.session_key)")
         
-        return repository.executeProcess(url: url, sessionKey: invokeResponse.session_key, phoneNumber: phoneNumber)
+        return repository.executeProcess(url: url, sessionKey: invokeResponse.session_key, phoneNumber: phoneNumber, useCase: useCase)
             .map { (prepareResponse, $0) }
             .eraseToAnyPublisher()
     }
