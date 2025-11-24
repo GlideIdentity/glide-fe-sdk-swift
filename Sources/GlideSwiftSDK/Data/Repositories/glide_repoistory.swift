@@ -20,15 +20,15 @@ class GlideRepository : Repository {
         self.processFlow = processFlow
     }
     
-    func executePrepare(url: String, phoneNumber: String) -> AnyPublisher<PrepareResponse, GlideSDKError> {
-        return prepareFlow.execute(url: url, phoneNumber: phoneNumber)
+    func executePrepare(url: String, phoneNumber: String, useCase: VerificationUseCase) -> AnyPublisher<PrepareResponse, GlideSDKError> {
+        return prepareFlow.execute(url: url, phoneNumber: phoneNumber, useCase: useCase)
     }
     
     func executeInvoke(url: String) -> AnyPublisher<InvokeResponse, GlideSDKError> {
         return invokeFlow.execute(url: url)
     }
     
-    func executeProcess(url: String, sessionKey: String, phoneNumber: String) -> AnyPublisher<ProcessResponse, GlideSDKError> {
-        return processFlow.execute(url: url, sessionKey: sessionKey, phoneNumber: phoneNumber)
+    func executeProcess(url: String, sessionKey: String, phoneNumber: String, useCase: VerificationUseCase) -> AnyPublisher<ProcessResponse, GlideSDKError> {
+        return processFlow.execute(url: url, sessionKey: sessionKey, phoneNumber: phoneNumber, useCase: useCase)
     }
 }

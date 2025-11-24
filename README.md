@@ -48,10 +48,29 @@ Glide.configure(
 )
 ```
 
-Third, start the authentication flow by providing a phone number.
+Third, start the authentication flow. You have two options:
+
+#### Option 1: Verify with Phone Number
+
+Provide a phone number to verify:
 
 ```swift
-Glide.instance.start(phoneNumber: "+14152654845") { result in
+Glide.instance.verifyWithPhoneNumber("+14152654845") { result in
+    switch result {
+    case .success(let data):
+        print("Success! Code: \(data.code), State: \(data.state)")
+    case .failure(let error):
+        print("Error: \(error.localizedDescription)")
+    }
+}
+```
+
+#### Option 2: Verify without Phone Number
+
+Let the SDK get the phone number from the device:
+
+```swift
+Glide.instance.verify { result in
     switch result {
     case .success(let data):
         print("Success! Code: \(data.code), State: \(data.state)")
@@ -90,7 +109,7 @@ struct ContentView: View {
     }
     
     private func startGlideSDK() {
-        Glide.instance.start(phoneNumber: phoneNumber) { result in
+        Glide.instance.verifyWithPhoneNumber(phoneNumber) { result in
             switch result {
             case .success(let data):
                 resultMessage = "Success! Code: \(data.code)"
@@ -101,6 +120,18 @@ struct ContentView: View {
     }
 }
 ```
+
+### Verification Methods
+
+The SDK provides two verification methods:
+
+1. **`verifyWithPhoneNumber(_:completion:)`**: Use this when you want to verify a specific phone number provided by the user.
+   - Use Case: `VerifyPhoneNumber`
+   - Requires: Phone number in E.164 format
+
+2. **`verify(completion:)`**: Use this when you want the SDK to automatically get the phone number from the device.
+   - Use Case: `GetPhoneNumber`
+   - Requires: No phone number parameter
 
 ### Configuration
 
