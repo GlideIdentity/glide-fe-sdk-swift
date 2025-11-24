@@ -30,12 +30,18 @@ internal final class DIContainer {
         return DefaultUserAgentProvider()
     }
     
+    // MARK: - Builders
+    internal func providePrepareRequestBuilder() -> PrepareRequestBuilder {
+        return DefaultPrepareRequestBuilder(userAgentProvider: provideUserAgentProvider())
+    }
+    
+    internal func provideProcessRequestBuilder() -> ProcessRequestBuilder {
+        return DefaultProcessRequestBuilder()
+    }
+    
     // MARK: - Use Cases
     internal func providePrepareFlow() -> PrepareFlow {
-        return PrepareFlow(
-            apiRequestProvider: provideApiRequestProvider(),
-            userAgentProvider: provideUserAgentProvider()
-        )
+        return PrepareFlow(apiRequestProvider: provideApiRequestProvider())
     }
     
     internal func provideInvokeFlow() -> InvokeFlow {
@@ -51,7 +57,9 @@ internal final class DIContainer {
         return GlideRepository(
             prepareFlow: providePrepareFlow(),
             invokeFlow: provideInvokeFlow(),
-            processFlow: provideProcessFlow()
+            processFlow: provideProcessFlow(),
+            prepareRequestBuilder: providePrepareRequestBuilder(),
+            processRequestBuilder: provideProcessRequestBuilder()
         )
     }
 }

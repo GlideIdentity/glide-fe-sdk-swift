@@ -55,7 +55,7 @@ Third, start the authentication flow. You have two options:
 Provide a phone number to verify:
 
 ```swift
-Glide.instance.verifyWithPhoneNumber("+14152654845") { result in
+Glide.instance.verify("+14152654845") { result in
     switch result {
     case .success(let data):
         print("Success! Code: \(data.code), State: \(data.state)")
@@ -109,7 +109,7 @@ struct ContentView: View {
     }
     
     private func startGlideSDK() {
-        Glide.instance.verifyWithPhoneNumber(phoneNumber) { result in
+        Glide.instance.verify(phoneNumber) { result in
             switch result {
             case .success(let data):
                 resultMessage = "Success! Code: \(data.code)"
@@ -123,9 +123,9 @@ struct ContentView: View {
 
 ### Verification Methods
 
-The SDK provides two verification methods:
+The SDK provides two verification methods using method overloading:
 
-1. **`verifyWithPhoneNumber(_:completion:)`**: Use this when you want to verify a specific phone number provided by the user.
+1. **`verify(_:completion:)`**: Use this when you want to verify a specific phone number provided by the user.
    - Use Case: `VerifyPhoneNumber`
    - Requires: Phone number in E.164 format
 

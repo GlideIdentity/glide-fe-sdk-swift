@@ -32,7 +32,7 @@ public final class Glide {
     /// - Parameters:
     ///   - phoneNumber: The phone number to verify in E.164 format (e.g., "+14152654845")
     ///   - completion: A closure called with the result of the verification flow
-    public func verifyWithPhoneNumber(_ phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
+    public func verify(_ phoneNumber: String, completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
         executeVerification(phoneNumber: phoneNumber, useCase: .verifyPhoneNumber, completion: completion)
     }
     
