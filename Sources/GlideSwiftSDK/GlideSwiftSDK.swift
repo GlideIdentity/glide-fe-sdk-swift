@@ -46,7 +46,7 @@ public final class Glide {
     /// - Parameter completion: A closure called with the result of the verification flow
     public func verify(completion: @escaping (Result<(code: String, state: String), GlideSDKError>) -> Void) {
         executeVerification(phoneNumber: nil, useCase: .getPhoneNumber, completion: completion)
-    }
+    } 
     
     // MARK: - Private Methods
     
