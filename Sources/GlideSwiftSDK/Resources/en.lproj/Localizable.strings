@@ -1,0 +1,30 @@
+/* 
+  Localizable.strings
+  GlideSwiftSDK
+
+  Created by amir avisar on 03/12/2025.
+  English Localization
+*/
+
+/* Verification Screen */
+"verification.title" = "Phone Verification";
+"verification.subtitle" = "Verify your phone number with Glide";
+"verification.phoneNumber.label" = "Phone Number";
+"verification.phoneNumber.placeholder" = "Enter phone number";
+"verification.phoneNumber.format" = "Format: +1234567890";
+"verification.verifyingNumber.label" = "Verifying Number";
+"verification.button.verify" = "Verify Phone Number";
+"verification.button.verifying" = "Verifying...";
+"verification.button.close" = "Close";
+
+/* Results */
+"result.success.title" = "Verification Successful!";
+"result.success.message" = "Code: %@\nState: %@";
+"result.failure.title" = "Verification Failed";
+"result.failure.message" = "%@";
+
+/* Errors */
+"error.configurationNotSet" = "SDK not configured. Please call configure() first.";
+"error.networkFailure" = "Network request failed. Please check your connection.";
+"error.invalidResponse" = "Invalid response from server.";
+"error.unknown" = "An unknown error occurred.";

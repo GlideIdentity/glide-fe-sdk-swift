@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "GlideSwiftSDK", 
+    defaultLocalization: "en",
     platforms: [.iOS(.v15)],
     products: [
         .library(
@@ -15,6 +16,10 @@ let package = Package(
     targets: [
         .target(
             name: "GlideSwiftSDK",
-            dependencies: []),
+            dependencies: [],
+            resources: [
+                .process("Resources")
+            ]
+        ),
     ]
 )

@@ -30,6 +30,10 @@ internal final class DIContainer {
         return DefaultUserAgentProvider()
     }
     
+    internal func provideLocalizationService() -> LocalizationService {
+        return DefaultLocalizationService()
+    }
+    
     // MARK: - Builders
     internal func providePrepareRequestBuilder() -> PrepareRequestBuilder {
         return DefaultPrepareRequestBuilder(userAgentProvider: provideUserAgentProvider())

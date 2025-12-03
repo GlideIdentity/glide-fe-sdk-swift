@@ -28,6 +28,12 @@ public final class Glide {
         self.container = container
     }
     
+    /// Get the localization service from the dependency injection container
+    /// - Returns: A LocalizationService instance for handling SDK localizations
+    public func getLocalizationService() -> LocalizationService {
+        return container.provideLocalizationService()
+    }
+    
     /// Verify with a provided phone number
     /// - Parameters:
     ///   - phoneNumber: The phone number to verify in E.164 format (e.g., "+14152654845")
