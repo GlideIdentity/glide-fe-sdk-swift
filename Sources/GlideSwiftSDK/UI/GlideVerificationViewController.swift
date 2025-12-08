@@ -5,36 +5,42 @@
 //  Created by amir avisar on 01/12/2025.
 //
 
-#if canImport(UIKit)
+#if canImport(UIKit) && canImport(SwiftUI)
 import UIKit
-#endif
-
-#if canImport(SwiftUI)
 import SwiftUI
-#endif
 
 // MARK: - UIKit ViewController
 
-#if canImport(UIKit) && canImport(SwiftUI)
-/// UIKit wrapper for Glide phone verification
+/// UIKit wrapper for Glide verification
 ///
 /// Example:
 /// ```swift
-/// let vc = GlideVerificationViewController(phoneNumber: "+1234567890") { result in
-///     print("Result: \(result)")
+/// let vc = GlideVerificationViewController(
+///     headerText: "My App",
+///     headerImage: UIImage(named: "logo")
+/// ) { result in
+///     switch result {
+///     case .success(let data):
+///         print("Code: \(data.code), State: \(data.state)")
+///     case .failure(let error):
+///         print("Error: \(error)")
+///     }
 /// }
 /// present(vc, animated: true)
 /// ```
 public class GlideVerificationViewController: UIViewController {
     
-    private let phoneNumber: String?
+    private let headerText: String?
+    private let headerImage: UIImage?
     private let onCompletion: ((Result<(code: String, state: String), GlideSDKError>) -> Void)?
     
     public init(
-        phoneNumber: String? = nil,
+        headerText: String? = nil,
+        headerImage: UIImage? = nil,
         completion: ((Result<(code: String, state: String), GlideSDKError>) -> Void)? = nil
     ) {
-        self.phoneNumber = phoneNumber
+        self.headerText = headerText
+        self.headerImage = headerImage
         self.onCompletion = completion
         super.init(nibName: nil, bundle: nil)
     }
@@ -49,18 +55,11 @@ public class GlideVerificationViewController: UIViewController {
     }
     
     private func embedSwiftUIView() {
-        // Get localization service from DI container
-        let localizationService = Glide.instance.getLocalizationService()
-        
         let swiftUIView = GlideVerificationView(
-            phoneNumber: phoneNumber,
-            onCompletion: { [weak self] result in
-                self?.onCompletion?(result)
-            },
-            onDismiss: { [weak self] in
-                self?.dismiss(animated: true)
-            },
-            localizationService: localizationService
+            headerText: headerText,
+            headerImage: headerImage,
+            onCompletion: { [weak self] in self?.onCompletion?($0) },
+            onDismiss: { [weak self] in self?.dismiss(animated: true) }
         )
         
         let hostingController = UIHostingController(rootView: swiftUIView)
@@ -78,155 +77,71 @@ public class GlideVerificationViewController: UIViewController {
         hostingController.didMove(toParent: self)
     }
 }
-#endif
 
 // MARK: - SwiftUI View
 
-#if canImport(SwiftUI)
-/// SwiftUI view for Glide phone verification
+/// SwiftUI view for Glide verification
 ///
 /// Example:
 /// ```swift
-/// GlideVerificationView(phoneNumber: "+1234567890") { result in
-///     print("Result: \(result)")
+/// GlideVerificationView(
+///     headerText: "My App",
+///     headerImage: UIImage(named: "logo")
+/// ) { result in
+///     switch result {
+///     case .success(let data):
+///         print("Code: \(data.code), State: \(data.state)")
+///     case .failure(let error):
+///         print("Error: \(error)")
+///     }
 /// } onDismiss: {
 ///     // Handle dismiss
 /// }
 /// ```
 public struct GlideVerificationView: View {
     
-    @State private var phoneNumber: String
-    @State private var isVerifying: Bool = false
-    @State private var resultCode: String? = nil
-    @State private var resultState: String? = nil
-    @State private var resultErrorMessage: String? = nil
-    @State private var isSuccess: Bool = false
-    @State private var showResult: Bool = false
-    
-    private let initialPhoneNumber: String?
+    private let headerText: String?
+    private let headerImage: UIImage?
     private let onCompletion: ((Result<(code: String, state: String), GlideSDKError>) -> Void)?
     private let onDismiss: (() -> Void)?
-    private let localizationService: LocalizationService
     
     public init(
-        phoneNumber: String? = nil,
+        headerText: String? = nil,
+        headerImage: UIImage? = nil,
         onCompletion: ((Result<(code: String, state: String), GlideSDKError>) -> Void)? = nil,
-        onDismiss: (() -> Void)? = nil,
-        localizationService: LocalizationService = DefaultLocalizationService()
+        onDismiss: (() -> Void)? = nil
     ) {
-        self.initialPhoneNumber = phoneNumber
-        self._phoneNumber = State(initialValue: phoneNumber ?? "")
+        self.headerText = headerText
+        self.headerImage = headerImage
         self.onCompletion = onCompletion
         self.onDismiss = onDismiss
-        self.localizationService = localizationService
     }
     
     public var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    HeaderView(localizationService: localizationService)
-                    
-                    phoneInputSection
-                    
-                    VerifyButton(
-                        isVerifying: isVerifying,
-                        isDisabled: isVerifying || (initialPhoneNumber == nil && phoneNumber.isEmpty),
-                        action: startVerification,
-                        localizationService: localizationService
-                    )
-                    
-                    if showResult {
-                        ResultView(
-                            code: resultCode,
-                            state: resultState,
-                            errorMessage: resultErrorMessage,
-                            isSuccess: isSuccess,
-                            localizationService: localizationService
-                        )
-                    }
-                }
-                .padding()
+            VStack {
+                Spacer()
+                HeaderView(text: headerText, image: headerImage)
+                Spacer()
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(localizationService.string(for: .closeButton)) { onDismiss?() }
+                    Button("Close") { onDismiss?() }
                 }
             }
         }
     }
-    
-    private var phoneInputSection: some View {
-        Group {
-            if initialPhoneNumber == nil {
-                PhoneInputView(
-                    phoneNumber: $phoneNumber, 
-                    isDisabled: isVerifying,
-                    localizationService: localizationService
-                )
-            } else {
-                PhoneDisplayView(
-                    phoneNumber: phoneNumber,
-                    localizationService: localizationService
-                )
-            }
-        }
-    }
-    
-    private func startVerification() {
-        isVerifying = true
-        showResult = false
-        
-        if let initialPhoneNumber = initialPhoneNumber {
-            Glide.instance.verify(initialPhoneNumber, completion: handleResult)
-        } else if !phoneNumber.isEmpty {
-            Glide.instance.verify(phoneNumber, completion: handleResult)
-        } else {
-            Glide.instance.verify(completion: handleResult)
-        }
-    }
-    
-    private func handleResult(_ result: Result<(code: String, state: String), GlideSDKError>) {
-        DispatchQueue.main.async {
-            isVerifying = false
-            
-            withAnimation {
-                showResult = true
-            }
-            
-            switch result {
-            case .success(let data):
-                isSuccess = true
-                resultCode = data.code
-                resultState = data.state
-                resultErrorMessage = nil
-                
-            case .failure(let error):
-                isSuccess = false
-                resultCode = nil
-                resultState = nil
-                resultErrorMessage = error.localizedDescription
-            }
-            
-            onCompletion?(result)
-        }
-    }
 }
+
+// MARK: - Preview
 
 #if DEBUG
 struct GlideVerificationView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
+            GlideVerificationView(headerText: "My App")
             GlideVerificationView()
-                .previewDisplayName("No Phone Number")
-            
-            GlideVerificationView(phoneNumber: "+14152654845")
-                .previewDisplayName("With Phone Number")
-            
-            GlideVerificationView()
-                .preferredColorScheme(.dark)
-                .previewDisplayName("Dark Mode")
         }
     }
 }
