@@ -1,11 +1,11 @@
 Pod::Spec.new do |s|
   s.name              = 'GlideSwiftSDK'
-  s.version           = '1.0.9'
+  s.version           = '1.1.0'
   s.summary           = 'A Glide Swift SDK'
   s.homepage          = 'https://github.com/GlideIdentity/glide-fe-sdk-swift'
   s.license           = { type: 'MIT' }
   s.author            = { 'Glide' => 'amiravisar89@gmail.com' }
-  s.documentation_url = 'https://github.com/GlideIdentity/glide-fe-sdk-swift/master/README.md'
+  s.documentation_url = 'https://github.com/GlideIdentity/glide-fe-sdk-swift/blob/master/README.md'
 
   s.ios.deployment_target  = '15.0'
   s.swift_version          = '5.9'
